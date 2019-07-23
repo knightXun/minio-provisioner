@@ -1,0 +1,48 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: write-pod
+spec:
+  containers:
+  - name: write-pod
+    image: gcr.io/google_containers/busybox:1.24
+    command:
+      - "/bin/sh"
+    args:
+      - "-c"
+      - "touch /mnt/SUCCESS && exit 0 || exit 1"
+    volumeMounts:
+      - name: minio-pvc
+        mountPath: "/mnt"
+  restartPolicy: "Never"
+  volumes:
+    - name: minio-pvc
+      persistentVolumeClaim:
+        claimName: minio
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: minio
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "example-minio"
+    provisioner: "s3fs.minio.com"
+    volume.kubernetes.io/minio-pv-name: test123
+    volume.kubernetes.io/minio-pv-path: test123
+    volume.kubernetes.io/minio-keys: "AKIAIOSFODNN7EXAMPLE:wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    volume.kubernetrs.io/minio-url: "https://192.168.90.133:9000"
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: example-minio
+provisioner: s3fs.minio.com
+mountOptions:
+  - vers=4.1

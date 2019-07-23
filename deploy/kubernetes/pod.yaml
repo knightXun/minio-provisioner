@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio-provisioner
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: minio-provisioner
+spec:
+  serviceAccount: minio-provisioner
+  containers:
+    - name: minio-provisioner
+      image: quay.io/minio/minio-provisioner:latest
+      securityContext:
+        capabilities:
+          add:
+            - DAC_READ_SEARCH
+      args:
+        - "-provisioner=s3fs.minio.com"
+        - "-grace-period=0"
+      env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+      imagePullPolicy: "IfNotPresent"
